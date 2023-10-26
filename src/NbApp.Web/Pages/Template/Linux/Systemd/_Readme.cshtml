@@ -1,0 +1,70 @@
+﻿@model SystemdReadmeVo
+@{
+    var vo = this.Model;
+    if (vo == null)
+    {
+        return;
+    }
+    var srv_name = vo.srv_name;
+    var srv_file_name = vo.srv_file_name;
+    var srv_port = vo.srv_port;
+    var srv_file_source = vo.srv_file_source;
+    var srv_file_target = vo.srv_file_target;
+}
+# systemd使用说明
+
+## 使用前提
+```bash
+1 .NET SDK installed >=6.0
+2 一个可以正常运行的发布(linux-based)
+```
+
+## 安装示例
+
+```bash
+# cd to srv_file directory
+sudo cp @(srv_file_source) @(srv_file_target)
+sudo systemctl daemon-reload
+sudo systemctl restart @srv_file_name
+sudo systemctl status @srv_file_name
+# 放开防火墙端口
+sudo firewall-cmd --zone=public --add-port @(srv_port)/tcp --permanent
+sudo firewall-cmd --reload
+```
+
+## 常用命令
+
+```bash
+# 立即启动一个服务
+$ sudo systemctl start @srv_file_name
+# 立即停止一个服务
+$ sudo systemctl stop @srv_file_name
+# 重启一个服务
+$ sudo systemctl restart @srv_file_name
+# 杀死一个服务的所有子进程
+$ sudo systemctl kill @srv_file_name
+# 重新加载一个服务的配置文件
+$ sudo systemctl reload @srv_file_name
+# 重载所有修改过的配置文件
+$ sudo systemctl daemon-reload
+# 显示某个 Unit 的所有底层参数
+$ systemctl show @srv_file_name
+# 显示某个 Unit 的指定属性的值
+$ systemctl show -p CPUShares @srv_file_name
+# 设置某个 Unit 的指定属性
+$ sudo systemctl set-property @srv_file_name CPUShares=500
+```
+
+## 手动测试
+```bash
+# 修改启动权限
+chmod +x @srv_name
+# 启动后台运行
+nohup ./@srv_name >/dev/null 2>&1 &
+# 查看进程
+ps ax | grep -e @srv_name | grep -v grep
+# 权限指令
+#echo 123 | sudo -S systemctl status @srv_name
+echo {password} | sudo -S {command}
+
+```

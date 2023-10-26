@@ -1,0 +1,71 @@
+﻿@using Microsoft.AspNetCore.Hosting;
+@using Microsoft.AspNetCore.Html;
+@using NbApp.Srvs.Menus;
+@model List<PageMenuTree>
+@{
+    var items = Model;
+    var currentPath = this.ViewBag.currentPath as string;
+    var theAppSetting = this.ViewBag.theAppSetting as TheAppSetting;
+    var appRootPath = PageMenuTree.CombineHerf(theAppSetting.PathBase, "");
+    var appRootLinkCss = currentPath == appRootPath ? "" : "";
+}
+@functions {
+
+    public void RenderItems(List<PageMenuTree> items, string currentPath)
+    {
+        RenderItems(items, currentPath, 0);
+    }
+
+    private void RenderItems(List<PageMenuTree> items, string currentPath, int deep)
+    {
+        @foreach (var item in items)
+        {
+            var isCurrent = currentPath.Equals(item.Href, StringComparison.OrdinalIgnoreCase);
+            if (isCurrent)
+            {
+                <li class="breadcrumb-item active" aria-current="page">@item.Title</li>
+                return;
+            }
+
+            var startWith = currentPath.StartsWith(item.Href, StringComparison.OrdinalIgnoreCase);
+            if (startWith)
+            {
+                if (item.Children.Count > 0)
+                {
+                    if (item.LinkDisabled)
+                    {
+                        <li class="breadcrumb-item active" aria-current="page">@item.Title</li>
+                    }
+                    else
+                    {
+                        <li class="breadcrumb-item"><a href="@item.Href">@item.Title</a></li>
+                    }
+                    RenderItems(item.Children, currentPath, ++deep);
+                }
+                else
+                {
+                    <li class="breadcrumb-item active" aria-current="page">@item.Title</li>
+                }
+            }
+        }
+    }
+}
+<header>
+    <div class="container">
+        <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+            <ol class="breadcrumb justify-content-end">
+                @{
+                    if (currentPath == appRootPath)
+                    {
+                        <li class="breadcrumb-item active" aria-current="page">App</li>
+                    }
+                    else
+                    {
+                        <li class="breadcrumb-item"><a href="@appRootPath">App</a></li>
+                    }
+                    RenderItems(items, currentPath);
+                }
+            </ol>
+        </nav>
+    </div>
+</header>

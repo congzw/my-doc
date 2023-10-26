@@ -1,0 +1,43 @@
+﻿@page "/gen-doc/{**file_name}"
+@{
+    var file_name = "";
+    if (this.RouteData.Values.TryGetValue("file_name", out var value))
+    {
+        if (value != null)
+        {
+            file_name = value.ToString();
+        }
+    }
+
+    var currentPath = this.ViewBag.currentPath as string;
+    var rootDir = MyAppContext.Instance.GetRuntimeStaticDirectory("generate-files");
+    var rootDirInfo = new System.IO.DirectoryInfo(rootDir);
+    if (!rootDirInfo.Exists)
+    {
+        <p>runtime dir not exist: @rootDirInfo.FullName</p>
+        return;
+    }
+
+    var theAppSetting = this.ViewBag.theAppSetting as TheAppSetting;
+    var rootPath = PageMenuTree.CombineHerf(theAppSetting.PathBase, "/");
+
+    var rootMenuTree = PageMenuTreeHelper.Instance.LoadForStaticFiles(rootPath, "gen-doc", rootDirInfo);
+    var currentMenuTree = rootMenuTree.GetAllDescendants().FirstOrDefault(x => x.Href.MyEquals(currentPath)) ?? rootMenuTree;
+
+    var downloadLink = "";
+    var fileInfo = currentMenuTree.GetFileSystemInfo() as System.IO.FileInfo;
+    if (fileInfo != null)
+    {
+        var position = currentMenuTree.Href.Replace("gen-doc/", "generate-files/");
+        position = position.Substring(0, position.LastIndexOf('/'));
+        downloadLink = RuntimeFileHelper.Instance.GuessLink(position, fileInfo.Name);
+    }
+
+    ViewBag.rootMenuTree = rootMenuTree;
+    ViewBag.currentMenuTree = currentMenuTree;
+    ViewBag.downloadLink = downloadLink;
+}
+@section Styles {
+    <link href="~/app/css/blog.css" rel="stylesheet" />
+}
+<partial name="EmbedFile/_Entry"></partial>

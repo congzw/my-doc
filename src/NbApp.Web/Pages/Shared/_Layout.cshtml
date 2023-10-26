@@ -1,0 +1,66 @@
+﻿@using Microsoft.AspNetCore.Hosting;
+@using NbApp.Srvs.Menus;
+@inject IWebHostEnvironment webEnv;
+@{
+    var theAppSetting = this.ViewBag.theAppSetting as TheAppSetting;
+    var appName = theAppSetting.AppName;
+    var currentPath = this.ViewBag.currentPath as string;
+
+    var title = appName + $" - [{ViewData["Title"] ?? currentPath}]";
+
+    var pageLocation = System.IO.Path.Combine(webEnv.ContentRootPath, "Pages");
+    var pageDirInfo = new System.IO.DirectoryInfo(pageLocation);
+    var pageMenuTree = PageMenuTreeHelper.Instance.LoadForRazorPages(theAppSetting.PathBase, "/", pageDirInfo);
+    var menuTrees = pageMenuTree.Children;
+}
+<!DOCTYPE html>
+<html lang="en" class="h-100">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@title</title>
+    <link href="~/libs/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/libs/boostrap-icons/bootstrap-icons.min.css" rel="stylesheet" />
+    <link href="~/libs/layui/css/layui.css" rel="stylesheet" />
+    <link href="~/libs/prism/theme/ocodia.css" rel="stylesheet" />
+    <link href="~/app/css/layout.css" rel="stylesheet" />
+    @await RenderSectionAsync("Styles", required: false)
+    <script src="~/libs/layui/layui.js"></script>
+    <script>
+        window.myGlobal = {}; 
+    </script>
+</head>
+<body class="d-flex flex-column h-100">
+    <header>
+
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3 fixed-top">
+            <div class="container">
+                <a class="navbar-brand" href="~/">@appName</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <partial name="_LayoutMenu" model="menuTrees"></partial>
+            </div>
+        </nav>
+    </header>
+    <partial name="_LayoutBreadcrumb" model="menuTrees"></partial>
+
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="footer mt-auto py-3 bg-light">
+        <div class="container">
+            <span> &copy; 2023 - @appName</span>
+        </div>
+    </footer>
+    <script src="~/libs/jquery/jquery.min.js"></script>
+    <script src="~/libs/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/libs/prism/prism.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+    <partial name="_LayoutDebug"></partial>
+</body>
+</html>

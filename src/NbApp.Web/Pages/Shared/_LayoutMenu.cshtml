@@ -1,0 +1,100 @@
+﻿@using Microsoft.AspNetCore.Hosting;
+@using Microsoft.AspNetCore.Html;
+@using Microsoft.Extensions.Logging;
+@using NbApp.Srvs.Menus;
+@model List<PageMenuTree>
+@inject IWebHostEnvironment webEnv;
+@{
+    var theAppSetting = this.ViewBag.theAppSetting as TheAppSetting;
+    var menuTrees = Model;
+    var currentPath = this.ViewBag.currentPath as string;
+    if (currentPath == null)
+    {
+        var request = this.ViewContext.HttpContext.Request;
+        currentPath = $"{request.PathBase}{request.Path}".ToLower();
+    }
+    //todo: read from config
+    var autoAppPages = new string[] { "Template" };
+}
+@functions {
+
+    public void RenderFixMenu(string herf, string title, string currentPath)
+    {
+        var theCss = currentPath.Equals(herf, StringComparison.OrdinalIgnoreCase) ?
+        "nav-link text-dark selected" : "nav-link text-dark";
+        <li class="nav-item"><a class="@theCss" href="@herf">@title</a></li>
+    }
+
+    public void RenderDropdownMenu(PageMenuTree item, string currentPath)
+    {
+        var isCurrent = currentPath.StartsWith(item.Href, StringComparison.OrdinalIgnoreCase);
+        var itemCss = isCurrent ? "nav-link dropdown-toggle selected" : "nav-link dropdown-toggle";
+        if (item.TotalFilesCount() == 0)
+        {
+            return;
+        }
+
+        //目录节点
+        <li class="nav-item dropdown">
+            <a class="@itemCss" href="@item.Href" id="@item.Id" data-bs-toggle="dropdown">@item.Title</a>
+            <ul class="dropdown-menu" aria-labelledby="@item.Id">
+                @foreach (var subItem in item.Children)
+                {
+                    RenderSubMenus(subItem, 0, currentPath);
+                }
+            </ul>
+        </li>
+    }
+
+    private void RenderSubMenus(PageMenuTree item, int deep, string currentPath)
+    {
+        var itemPaddingStyle = $"padding-left:{(int)(20 * deep)}px";
+        var isCurrent = currentPath.StartsWith(item.Href, StringComparison.OrdinalIgnoreCase);
+        var itemCss = isCurrent ? "dropdown-item selected" : "dropdown-item";
+        deep++;
+        var herf = item.LinkDisabled ? "javascript:void(0)" : item.Href;
+        <li style="@itemPaddingStyle">
+            <a class="@itemCss" href="@herf">
+                @{
+                    RenderPageIconIf(item);
+                }
+            </a>
+        </li>
+        @foreach (var subItem in item.Children)
+        {
+            RenderSubMenus(subItem, deep, currentPath);
+        }
+    }
+
+    private void RenderPageIconIf(PageMenuTree item)
+    {
+        if (item.Children.Count == 0)
+        {
+            <text>└──</text>
+            <i class="bi-link"></i>
+            <text>@item.Title</text>
+        }
+        else
+        {
+            <text>└──@item.Title</text>
+        }
+    }
+}
+<div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+    <ul class="navbar-nav flex-grow-1 bd-navbar">
+        @{
+            var genPath = PageMenuTree.CombineHerf(theAppSetting.PathBase, "/gen-doc");
+            RenderFixMenu(genPath, "GenDoc", currentPath);
+        }
+        @foreach (var autoAppPage in autoAppPages)
+        {
+            foreach (var item in menuTrees)
+            {
+                if (autoAppPage.MyEquals(item.GetFileSystemInfo()?.Name))
+                {
+                    RenderDropdownMenu(item, currentPath);
+                }
+            }
+        }
+    </ul>
+</div>

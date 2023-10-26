@@ -1,0 +1,56 @@
+﻿@using Microsoft.AspNetCore.Hosting;
+@using Microsoft.AspNetCore.Html;
+@using Microsoft.Extensions.Logging;
+@using NbApp.Srvs.Menus;
+@model List<PageMenuTree>
+@inject IWebHostEnvironment webEnv;
+@{
+    var menuTrees = Model;
+    var currentPath = this.ViewBag.currentPath as string;
+}
+@functions {
+
+    public void RenderMdFileMenus(List<PageMenuTree> items, string currentPath)
+    {
+        foreach (var item in items)
+        {
+            RenderMdFileMenu(item, currentPath, 0);
+        }
+    }
+
+    private void RenderMdFileMenu(PageMenuTree item, string currentPath, int deep)
+    {
+        var fileCount = item.GetAllDescendants().Where(x => !x.IsDirectory).Count();
+        <li>
+            @if (item.IsDirectory)
+            {
+                var prefix = "└";
+                var padding = deep * 15;
+                var paddingStyle = $"padding-left:{padding}px;";
+                <span style="@paddingStyle">@prefix</span>
+                <i class="bi-folder"></i>
+                <a href="@item.Href">@item.Title @fileCount</a>
+            }
+            else
+            {
+                //<a href="@item.Href">@System.IO.Path.GetFileName(item.GetFullPath())</a>
+            }
+            @if (fileCount > 0)
+            {
+                <ul class="mb-0">
+                    @foreach (var c in item.Children)
+                    {
+                        RenderMdFileMenu(c, currentPath, deep + 1);
+                    }
+                </ul>
+            }
+        </li>
+    }
+}
+
+<h4 class="fst-italic mb-1">Categories</h4>
+<ul class="mb-3">
+    @{
+        RenderMdFileMenus(menuTrees, currentPath);
+    }
+</ul>
