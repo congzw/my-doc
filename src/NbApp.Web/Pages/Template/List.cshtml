@@ -1,9 +1,43 @@
 ﻿@page
 @using NbApp.Srvs.RuntimeFiles;
+@using System.IO;
 @{
     var title = "文件列表";
     this.ViewBag.Title = title;
+
+    var fileHelper = RuntimeFileHelper.Instance;
+    var genRoot = MyAppContext.Instance.GetRuntimeStaticDirectory();
+    var items = fileHelper.ListAll();
 }
-<div>
-    <p>todo</p>
+<div class="card">
+    <div class="card-body">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">位置</th>
+                    <th scope="col">文件</th>
+                    <th scope="col">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (int i = 0; i < items.Count; i++)
+                {
+                    var item = items[i];
+                    @*var jumpLink = Url.Page("/Template/Save", null, new { link = item.Link });*@
+                    <tr>
+                        <th scope="row">@(i + 1)</th>
+                        <td>@item.Position</td>
+                        <td>@item.FileName</td>
+                        <td>
+                            <a asp-page="/Template/Save" asp-route-link="@item.Link" target="_blank">编辑<i class="bi-file-earmark"></i></a>
+                            @*<a href="@jumpLink" target="_blank">编辑<i class="bi-file-earmark"></i></a>*@
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+    </div>
+
 </div>

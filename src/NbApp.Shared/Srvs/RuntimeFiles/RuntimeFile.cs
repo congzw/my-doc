@@ -1,4 +1,5 @@
 using Common;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
@@ -82,6 +83,25 @@ namespace NbApp.Srvs.RuntimeFiles
 
         public string SaveRoot => MyAppContext.Instance.GetRuntimeStaticDirectory();
         public string LinkBase => MyAppContext.Instance.LinkBase;
+
+        public List<RuntimeFile> ListAll()
+        {
+            var list = new List<RuntimeFile>();            
+            var rootDirInfo = new DirectoryInfo(SaveRoot);
+            if (rootDirInfo.Exists)
+            {
+                var fileInfos = rootDirInfo.GetFiles("*.*", SearchOption.AllDirectories);
+                foreach (var fileInfo in fileInfos)
+                {
+                    // root_dir/.../file_name
+                    var position = fileInfo.FullName.Replace(rootDirInfo.FullName, "").Replace(fileInfo.Name, "");
+                    var item = Create(position, fileInfo.Name);
+                    list.Add(item);
+                }
+            }
+
+            return list;
+        }
 
         public RuntimeFile Create(string position, string fileName)
         {

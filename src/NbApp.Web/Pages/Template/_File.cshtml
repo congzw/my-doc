@@ -1,0 +1,109 @@
+﻿@page
+@using NbApp.Srvs.RuntimeFiles;
+@model FilePageModel
+@{
+    var title = "文件列表";
+    this.ViewBag.Title = title;
+
+    var fileHelper = RuntimeFileHelper.Instance;
+    var genRoot = MyAppContext.Instance.GetRuntimeStaticDirectory();
+    var items = fileHelper.ListAll();
+}
+@functions {
+    public class FilePageModel : PageModel
+    {
+        public void OnGet()
+        {
+        }
+
+        public async Task<IActionResult> OnPostDelete([FromQuery] string link)
+        {
+            await Task.CompletedTask;
+            if (!string.IsNullOrWhiteSpace(link))
+            {
+                //todo validate
+                //todo: delete
+                Console.WriteLine("todo delete " + link);
+            }
+            return RedirectToPage("File");
+        }
+    }
+}
+<div class="card">
+    <div class="card-body">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">位置</th>
+                    <th scope="col">文件</th>
+                    <th scope="col">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (int i = 0; i < items.Count; i++)
+                {
+                    var item = items[i];
+                    var deletePostLink = Url.Page("/Template/File", "Delete", new { link = item.Link });
+                    <tr>
+                        <th scope="row">@(i + 1)</th>
+                        <td>@item.Position</td>
+                        <td>@item.FileName</td>
+                        <td>
+                            <div class="layui-clear-space">
+                                <form action="@deletePostLink" method="post">
+                                    <input type="text" name="demo" value="@item.Link" hidden>
+                                    <a class="layui-btn layui-btn-primary layui-btn-xs" asp-page="/Template/Save" asp-route-link="@item.Link" target="_blank">编辑<i class="bi-file-earmark"></i></a>
+                                    <button class="layui-btn layui-btn-primary layui-btn-xs" lay-submit lay-filter="formDelete">删除<i class="bi-file-earmark-break"></i></button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+@section Scripts{
+    <script>
+
+        layui.use('form', function () {
+            var form = layui.form;
+
+            //监听提交
+            form.on('submit(formDelete)', function (data) {
+                layer.msg(JSON.stringify(data.field));
+                return false;
+            });
+        });
+
+        //layui.use('form', function () {
+        //    var form = layui.form;
+        //    //监听提交
+        //    form.on('submit(formDelete)', function (data) {
+        //        console.log(data.field);
+
+        //        layer.confirm('确定提交吗？', {
+        //          btn: ['按钮一', '按钮二', '按钮三'] //可以无限个按钮
+        //          ,btn3: function(index, layero){
+        //            //按钮【按钮三】的回调
+        //          }
+        //        }, function(index, layero){
+        //          //按钮【按钮一】的回调
+        //        }, function(index){
+        //          //按钮【按钮二】的回调
+        //        });
+
+        //          //layer.confirm('确定提交吗？', function(index){
+        //          //  layer.close(index); // 关闭确认提示框
+        //          //  // 显示填写结果，仅作演示用
+        //          //  layer.alert(JSON.stringify(field), {
+        //          //    title: '当前填写的字段值'
+        //          //  });
+        //          //});
+
+        //        return false;
+        //    });
+        //});
+    </script>
+}

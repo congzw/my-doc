@@ -13,8 +13,9 @@
         var request = this.ViewContext.HttpContext.Request;
         currentPath = $"{request.PathBase}{request.Path}".ToLower();
     }
-    //todo: read from config
-    var autoAppPages = new string[] { "Template" };
+    
+    //var autoAppPages = new string[] { "Template" };
+    var autoAppPages = theAppSetting.ParseAutoRazorPageNavs();
 }
 @functions {
 

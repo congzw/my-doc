@@ -11,11 +11,10 @@
 Description=@vo.srv_name
 
 [Service]
-Type=notify
+Type=simple
 WorkingDirectory=@vo.srv_dir
 ExecStart=@execStart
 SyslogIdentifier=@vo.srv_name
-User=@vo.user
 Restart=@vo.restart_type
 RestartSec=@vo.restart_sec
 @foreach (var item in vo.srvice_exts)
@@ -24,4 +23,4 @@ RestartSec=@vo.restart_sec
 }
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target

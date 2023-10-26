@@ -23,36 +23,38 @@
 
 ```bash
 # cd to srv_file directory
-sudo cp @(srv_file_source) @(srv_file_target)
-sudo systemctl daemon-reload
-sudo systemctl restart @srv_file_name
-sudo systemctl status @srv_file_name
+cp @(srv_file_source) @(srv_file_target)
+systemctl --user enable @srv_file_name
+systemctl --user daemon-reload
+systemctl --user start @srv_file_name
+systemctl --user status @srv_file_name
 # 放开防火墙端口
 sudo firewall-cmd --zone=public --add-port @(srv_port)/tcp --permanent
 sudo firewall-cmd --reload
+
 ```
 
 ## 常用命令
 
 ```bash
 # 立即启动一个服务
-$ sudo systemctl start @srv_file_name
+$ systemctl --user start @srv_file_name
 # 立即停止一个服务
-$ sudo systemctl stop @srv_file_name
+$ systemctl --user stop @srv_file_name
 # 重启一个服务
-$ sudo systemctl restart @srv_file_name
+$ systemctl --user restart @srv_file_name
 # 杀死一个服务的所有子进程
-$ sudo systemctl kill @srv_file_name
-# 重新加载一个服务的配置文件
-$ sudo systemctl reload @srv_file_name
+$ systemctl --user kill @srv_file_name
+# 重新加载一个服务的配置文件d
+$ systemctl --user reload @srv_file_name
 # 重载所有修改过的配置文件
-$ sudo systemctl daemon-reload
+$ systemctl --user daemon-reload
 # 显示某个 Unit 的所有底层参数
-$ systemctl show @srv_file_name
+$ systemctl --user show @srv_file_name
 # 显示某个 Unit 的指定属性的值
 $ systemctl show -p CPUShares @srv_file_name
 # 设置某个 Unit 的指定属性
-$ sudo systemctl set-property @srv_file_name CPUShares=500
+$ systemctl --user set-property @srv_file_name CPUShares=500
 ```
 
 ## 手动测试

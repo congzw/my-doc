@@ -16,35 +16,36 @@
 @functions {
     public class SavePageModel : PageModel
     {
-        [TempData]
-        public string _formVoJson { get; set; }
         public SaveFileFormVo FormVo { get; set; }
-        public void OnGet()
+        public void OnGet([FromQuery]string link)
         {
-            if (string.IsNullOrWhiteSpace(_formVoJson))
+            if (!string.IsNullOrWhiteSpace(link))
             {
-                FormVo = new SaveFileFormVo();
+                var fileHelper = RuntimeFileHelper.Instance;
+                var items = fileHelper.ListAll();
+                var theOne = items.FirstOrDefault(x => x.Link.Equals(link, StringComparison.OrdinalIgnoreCase));
+                if (theOne != null)
+                {
+                    FormVo = new SaveFileFormVo();
+                    FormVo.FileName = theOne.FileName;
+                    FormVo.SaveTo = theOne.Position;
+                    FormVo.FileContent = theOne.Content;
+                    FormVo.Link = theOne.Link;
+                    return;
+                }
             }
-            else
-            {
-                FormVo = _formVoJson.FromJson<SaveFileFormVo>(null);
-            }
+
+            FormVo = new SaveFileFormVo();
         }
 
         public async Task<IActionResult> OnPost([FromForm] SaveFileFormVo vo)
         {
             await Task.CompletedTask;
-
             //todo validate
             var fileHelper = RuntimeFileHelper.Instance;
             var theFile = fileHelper.Create(vo.SaveTo, vo.FileName);
             await theFile.SaveContentIf(vo.FileContent);
-            vo.Link = theFile.Link;
-
-            var _formVoJson = vo.ToJson();
-            Console.WriteLine($"OnPostSave: {_formVoJson}");
-            TempData["_formVoJson"] = _formVoJson;
-            return RedirectToPage("Save");
+            return RedirectToPage("Save?link=" + theFile.Link);
         }
     }
 
