@@ -1,0 +1,65 @@
+﻿@page
+@using NbApp.Srvs.MyCli;
+@using NbApp.Srvs.MyCli.Exts;
+@using System.Diagnostics;
+@{
+    var dotnetCliWrap = MyCliDotnet.Instance;
+    var tabDict = new Dictionary<string, MyCliExecuteContext>();
+    
+    var version = await dotnetCliWrap.GetVersion().Execute(true);
+    tabDict[nameof(version)] = version;
+
+    var sdks = await dotnetCliWrap.GetSdks().Execute(true);
+    tabDict[nameof(sdks)] = sdks;
+
+    var info = await dotnetCliWrap.GetInfo().Execute(true);
+    tabDict[nameof(info)] = info;    
+
+    var firstKey = nameof(version);
+}
+
+<nav>
+    <div class="nav nav-tabs" id="nav-tab" role="tablist">
+        @foreach (var tabItem in tabDict)
+        {
+            var selected = tabItem.Key == firstKey;
+            var tabCss = selected ? "nav-link active" : "nav-link";
+            var tabId = $"nav-tab-{tabItem.Key}";
+            var tabContentId = $"nav-content-{tabItem.Key}";
+            <button class="@tabCss" id="@tabId" data-bs-toggle="tab" data-bs-target="#@tabContentId" type="button" role="tab" aria-controls="@tabContentId" aria-selected="@selected.ToString().ToLower()">
+                @tabItem.Key
+            </button>
+        }
+    </div>
+</nav>
+<div class="tab-content" id="nav-tabContent">
+    @foreach (var tabItem in tabDict)
+    {
+        var cmdResult = tabItem.Value.CmdResult;        
+        var output = cmdResult.GetStandardOutput();
+        if (string.IsNullOrWhiteSpace(output))
+        {
+            output = cmdResult.GetStandardError();
+        }
+
+        var outputLines = output.Replace("\r", "");
+        var selected = tabItem.Key == firstKey;
+        var currentCss = selected ? "tab-pane fade show active" : "tab-pane fade";
+        var tabId = $"nav-tab-{tabItem.Key}";
+        var tabContentId = $"nav-content-{tabItem.Key}";
+        <div class="@currentCss" id="@tabContentId" role="tabpanel" aria-labelledby="@tabId" tabindex="0">
+            <div class="card m-3">
+                <h5 class="card-header">@tabItem.Key</h5>
+                <div class="card-body">
+                    <pre><code class="language-json">@Html.Raw(tabItem.Value.ToJson(true))</code></pre>
+                </div>
+            </div>
+            <div class="card m-3">
+                <h5 class="card-header">Output</h5>
+                <div class="card-body">
+                    <pre><code class="language-shell">@Html.Raw(outputLines)</code></pre>
+                </div>
+            </div>
+        </div>
+    }
+</div>

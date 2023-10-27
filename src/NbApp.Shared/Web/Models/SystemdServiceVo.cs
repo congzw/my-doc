@@ -6,7 +6,6 @@ namespace NbApp.Web.Models
     {
         public string srv_dir { get; set; }
         public string srv_name { get; set; }
-        public string user { get; set; } = "a";
         public string restart_type { get; set; } = "always";
         public int restart_sec { get; set; } = 15;
         public List<string> srvice_exts { get; set; } = new List<string>() { "KillSignal=SIGINT", "Environment=DOTNET_ROOT=/opt/media/dotnet/" };

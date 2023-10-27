@@ -1,0 +1,150 @@
+﻿@page
+@using NbApp.Srvs.MyCli;
+@using NbApp.Srvs.MyCli.Exts;
+@using System.Diagnostics;
+@model ExecPageModel
+@{
+    MyCliExecuteContext myCliCtx = null;
+    var input = "";
+    var exMessage = "";
+    var execFormVo = this.Model.ExecFormVo;
+    var target = execFormVo.Target;
+    var arguments = ArgsHelper.Instance.SplitCommandLine(execFormVo.Arguments);
+    //var arguments = MyCliCmd.ParseToArgumentsArray(execFormVo.Arguments, '\n');
+    try
+    {
+        var myCmd = MyCliCmdBuilder.Create(execFormVo.Target).WithArguments(arguments).Build();
+        //input = $"{myCmd.Target} {myCmd.GetArgumentsValue()}";
+        input = $"{myCmd.Target} {myCmd.GetArgumentsValue()}";
+        myCliCtx = await myCmd.Execute(execFormVo.AwaitReturn);
+    }
+    catch (Exception ex)
+    {
+        exMessage = ex.Message;
+    }
+}
+
+@functions {
+    public class ExecPageModel : PageModel
+    {
+        public ExecFormVo ExecFormVo { get; set; }
+
+        [TempData]
+        public string execFormVoJson { get; set; }
+
+        public void OnGet()
+        {
+            if (!string.IsNullOrWhiteSpace(execFormVoJson))
+            {
+                var execFormVo = execFormVoJson.FromJson<ExecFormVo>(null);
+                if (execFormVo != null)
+                {
+                    ExecFormVo = execFormVo;
+                }
+            }
+
+            if (ExecFormVo == null)
+            {
+                //create default
+                ExecFormVo = new ExecFormVo();
+                ExecFormVo.Target = "dotnet";
+                ExecFormVo.Arguments = "--version";
+                ExecFormVo.AwaitReturn = true;
+            }
+
+            //Console.WriteLine($"OnGet: {ExecFormVo.ToJson(true)}");
+        }
+
+        public async Task<IActionResult> OnPost([FromForm] ExecFormVo vo)
+        {
+            await Task.CompletedTask;
+            //todo: validate
+            //Console.WriteLine($"OnPost: {vo.ToJson(true)}");
+            TempData["execFormVoJson"] = vo.ToJson();
+            return RedirectToPage("Exec");
+        }
+    }
+
+    public class ExecFormVo
+    {
+        public string Target { get; set; }
+        public string Arguments { get; set; }
+        public bool AwaitReturn { get; set; }
+    }
+}
+@if (!string.IsNullOrWhiteSpace(exMessage))
+{
+    <div class="card mt-3">
+        <h5 class="card-header">执行异常</h5>
+        <div class="card-body">
+            <pre><code class="language-shell">@input</code></pre>
+            <pre><code class="language-shell">@exMessage</code></pre>
+        </div>
+    </div>
+}
+else
+{
+    <partial name="Cli/_CliExecCtx" model="myCliCtx"></partial>
+}
+<div class="card mt-3">
+    <h5 class="card-header">脚本参数</h5>
+    <div class="card-body">
+        <form class="layui-form" action="" method="post">
+            <div class="layui-form-item">
+                <label asp-for="@execFormVo.Target" class="layui-form-label">
+                    目标:
+                </label>
+                <div class="layui-input-block">
+                    <input type="text" name="Target" required lay-verify="required" placeholder="请输入目标" autocomplete="off" class="layui-input" asp-for="@execFormVo.Target">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label asp-for="@execFormVo.Arguments" class="layui-form-label">
+                    参数:
+                </label>
+                <div class="layui-input-block">
+                    <textarea placeholder="请输入参数" class="layui-textarea" autocomplete="off" name="Arguments" asp-for="@execFormVo.Arguments"></textarea>
+                </div>
+            </div>
+
+            <div class="layui-form-item" pane>
+                <label asp-for="@execFormVo.AwaitReturn" class="layui-form-label">等待</label>
+                <div class="layui-input-block">
+                    <input name="AwaitReturn" asp-for="@execFormVo.AwaitReturn" type="checkbox" lay-skin="switch" title="是|否">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <div class="layui-input-block">
+                    <button class="layui-btn" lay-submit lay-filter="formExec">执行脚本</button>
+                    <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        //layui.use(['layer', 'form'], function () {
+        //    var layer = layui.layer
+        //        , form = layui.form;
+
+        //    layer.msg('Hello World');
+        //});
+
+        //Demo
+        layui.use('form', function () {
+            var form = layui.form;
+            //监听提交
+            form.on('submit(formExec)', function (data) {
+                //layer.msg(JSON.stringify(data.field));
+                //return false;
+                console.log(data.field);
+                var theModel = data.field;
+                return true;
+            });
+        });
+
+    </script>
+}

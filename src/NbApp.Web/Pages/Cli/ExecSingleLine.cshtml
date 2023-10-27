@@ -1,0 +1,132 @@
+﻿@page
+@using NbApp.Srvs.MyCli;
+@using NbApp.Srvs.MyCli.Exts;
+@using System.Diagnostics;
+@model ExecSingleLinePageModel
+@{
+    MyCliExecuteContext myCliCtx = null;
+    var exMessage = "";
+    var execFormVo = this.Model.ExecFormVo;
+    var input = execFormVo.TargetAndArguments;
+    var targetAndArguments = ArgsHelper.Instance.SplitCommandLine(execFormVo.TargetAndArguments);
+    try
+    {
+        var target = targetAndArguments[0];
+        var arguments = targetAndArguments.Skip(1).ToArray();
+        var myCmd = MyCliCmdBuilder.Create(target).WithArguments(arguments).Build();
+        myCliCtx = await myCmd.Execute(execFormVo.AwaitReturn);
+    }
+    catch (Exception ex)
+    {
+        exMessage = ex.Message;
+    }
+
+    var myCliCtxJson = myCliCtx.ToJson(true);
+}
+
+@functions {
+    public class ExecSingleLinePageModel : PageModel
+    {
+        public ExecFormVo ExecFormVo { get; set; }
+
+        [TempData]
+        public string execFormVoJson { get; set; }
+
+        public void OnGet()
+        {
+            if (!string.IsNullOrWhiteSpace(execFormVoJson))
+            {
+                var execFormVo = execFormVoJson.FromJson<ExecFormVo>(null);
+                if (execFormVo != null)
+                {
+                    ExecFormVo = execFormVo;
+                }
+            }
+
+            if (ExecFormVo == null)
+            {
+                //create default
+                ExecFormVo = new ExecFormVo();
+                ExecFormVo.TargetAndArguments = "dotnet --version";
+                ExecFormVo.AwaitReturn = true;
+            }
+            //Console.WriteLine($"OnGet: {ExecFormVo.ToJson(true)}");
+        }
+
+        public async Task<IActionResult> OnPost([FromForm] ExecFormVo vo)
+        {
+            await Task.CompletedTask;
+            //todo: validate
+            Console.WriteLine($"OnPost: {vo.ToJson(true)}");
+            TempData["execFormVoJson"] = vo.ToJson();
+            return RedirectToPage("ExecSingleLine");
+        }
+    }
+
+    public class ExecFormVo
+    {
+        public string TargetAndArguments { get; set; }
+        public bool AwaitReturn { get; set; }
+    }
+}
+@if (!string.IsNullOrWhiteSpace(exMessage))
+{
+    <div class="card mt-3">
+        <h5 class="card-header">执行异常</h5>
+        <div class="card-body">
+            <pre><code class="language-shell">@input</code></pre>
+            <pre><code class="language-shell">@exMessage</code></pre>
+        </div>
+    </div>
+}
+else
+{
+    <partial name="Cli/_CliExecCtx" model="myCliCtx"></partial>
+}
+<div class="card mt-3">
+    <h5 class="card-header">脚本参数</h5>
+    <div class="card-body">
+        <form class="layui-form" action="" method="post">
+            <div class="layui-form-item">
+                <label asp-for="@execFormVo.TargetAndArguments" class="layui-form-label">
+                    命令:
+                </label>
+                <div class="layui-input-block">
+                    <textarea placeholder="请输入命令和参数" class="layui-textarea" autocomplete="off" name="TargetAndArguments" asp-for="@execFormVo.TargetAndArguments"></textarea>
+                </div>
+            </div>
+            <div class="layui-form-item" pane>
+                <label asp-for="@execFormVo.AwaitReturn" class="layui-form-label">等待</label>
+                <div class="layui-input-block">
+                    <input name="AwaitReturn" asp-for="@execFormVo.AwaitReturn" type="checkbox" lay-skin="switch" title="是|否">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-input-block">
+                    <button class="layui-btn" lay-submit lay-filter="formExec">执行脚本</button>
+                    <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+@section Scripts {
+    <script>
+        //Demo
+        layui.use('form', function () {
+
+            var myCliCtx = @Html.Raw(myCliCtxJson);
+            console.log(myCliCtx);
+            var form = layui.form;
+            //监听提交
+            form.on('submit(formExec)', function (data) {
+                //layer.msg(JSON.stringify(data.field));
+                //return false;
+                console.log(data.field);
+                var theModel = data.field;
+                return true;
+            });
+        });
+
+    </script>
+}

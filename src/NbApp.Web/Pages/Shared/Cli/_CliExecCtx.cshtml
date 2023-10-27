@@ -1,0 +1,69 @@
+﻿@using NbApp.Srvs.MyCli;
+@using System.Text;
+@model MyCliExecuteContext
+@{
+    var vo = this.Model;
+    if (vo == null)
+    {
+        return;
+    }
+
+    var cmd = vo.Cmd;
+    var cmdResult = vo.CmdResult;
+    var runSciprt = $"{cmd.Target} {cmd.GetArgumentsValue()}";
+
+    var processId = vo.ProcessId;
+    var outputBuilder = new StringBuilder();
+    outputBuilder.AppendLine($"# process: {vo.ProcessId}");
+
+    var execState = "";
+    var output = "";
+    if (cmdResult != null)
+    {
+        outputBuilder.AppendLine($"# used: {cmdResult.RunTime}");
+        outputBuilder.AppendLine($"# exitCode: {cmdResult.ExitCode}");
+
+        var stdOutput = cmdResult.GetStandardOutput();
+        var stdError = cmdResult.GetStandardError();
+
+        execState = "fail";
+        if (cmdResult.ExitCode == 0 && string.IsNullOrWhiteSpace(stdError))
+        {
+            execState = "success";
+        }
+        outputBuilder.AppendLine($"# state: {execState}");
+        
+        if (!string.IsNullOrWhiteSpace(stdOutput))
+        {
+            outputBuilder.AppendLine($"{stdOutput}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(stdError))
+        {
+            outputBuilder.AppendLine($"# error:");
+            outputBuilder.Append($"{stdError}");
+        }
+    }
+}
+
+<div class="card mt-3">
+    <h5 class="card-header">
+        执行脚本
+        @if (execState == "success")
+        {
+            <i class="layui-icon layui-icon-ok" style="color: green; font-weight: bold"></i>
+        }
+        else if (execState == "fail")
+        {
+            <i class="layui-icon layui-icon-close" style="color: red; font-weight: bold"></i>
+        }
+        else
+        {
+            <i class="layui-icon layui-icon-play" style="color: green; font-weight: bold"></i>
+        }
+    </h5>
+    <div class="card-body">
+        <pre><code class="language-shell">@runSciprt</code></pre>
+        <pre><code class="language-shell">@outputBuilder.ToString()</code></pre>
+    </div>
+</div>
